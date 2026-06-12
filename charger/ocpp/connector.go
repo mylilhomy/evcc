@@ -424,5 +424,15 @@ func (conn *Connector) Voltages() (float64, float64, float64, error) {
 		}
 	}
 
+	// fall back to non-phased voltage (DC chargers report a single Voltage measurand)
+	if m, ok := conn.measurements[types.MeasurandVoltage]; ok {
+		f, err := strconv.ParseFloat(m.Value, 64)
+		if err != nil {
+			return 0, 0, 0, fmt.Errorf("invalid voltage value %s: %w", m.Value, err)
+		}
+		v := scale(f, m.Unit)
+		return v, 0, 0, nil
+	}
+
 	return 0, 0, 0, api.ErrNotAvailable
 }

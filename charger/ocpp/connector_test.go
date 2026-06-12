@@ -180,6 +180,37 @@ func (suite *connTestSuite) TestConnectorMeasurementsRunningTxn() {
 	suite.NoError(err, "Voltages")
 }
 
+// TestConnectorScalarVoltage verifies that a non-phased Voltage measurand,
+// as sent by DC chargers, is returned via the PhaseVoltages interface.
+func (suite *connTestSuite) TestConnectorScalarVoltage() {
+	suite.conn.measurements[types.MeasurandVoltage] = types.SampledValue{Value: "412.5", Unit: types.UnitOfMeasureV}
+	suite.clock.Add(time.Hour)
+	suite.conn.meterUpdated = suite.clock.Now()
+	suite.conn.txnId = 1
+
+	u1, u2, u3, err := suite.conn.Voltages()
+	suite.NoError(err, "Voltages")
+	suite.Equal(412.5, u1, "scalar voltage must be returned on L1")
+	suite.Equal(0.0, u2)
+	suite.Equal(0.0, u3)
+}
+
+// TestConnectorPhasedVoltagePreferred ensures phased voltages take precedence
+// over a scalar fallback when both are present.
+func (suite *connTestSuite) TestConnectorPhasedVoltagePreferred() {
+	suite.conn.measurements[types.MeasurandVoltage+".L1-N"] = types.SampledValue{Value: "230"}
+	suite.conn.measurements[types.MeasurandVoltage+".L2-N"] = types.SampledValue{Value: "231"}
+	suite.conn.measurements[types.MeasurandVoltage+".L3-N"] = types.SampledValue{Value: "229"}
+	suite.conn.measurements[types.MeasurandVoltage] = types.SampledValue{Value: "999"}
+	suite.clock.Add(time.Hour)
+	suite.conn.meterUpdated = suite.clock.Now()
+	suite.conn.txnId = 1
+
+	u1, _, _, err := suite.conn.Voltages()
+	suite.NoError(err, "Voltages")
+	suite.Equal(230.0, u1, "phased voltage must take precedence over scalar fallback")
+}
+
 // TestOnStatusNotificationClearsStaleTxn ensures that a transaction left over
 // from a previous session (e.g. because the charger never sent StopTransaction,
 // like the Zaptec Go 2 in local OCPP mode) is cleared when the connector
