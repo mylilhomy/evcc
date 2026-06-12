@@ -1,0 +1,49 @@
+# Integrationstest-Konfiguration fuer DC-Lastmanagement
+# Netzzaehler liest steuerbaren Wert vom Test-Harness (HTTP), DC-Station = simulierter OCPP-Client
+network:
+  schema: http
+  host: 127.0.0.1
+  port: 7080
+
+log: error
+levels:
+  lp-1: debug
+  ocpp: error
+
+interval: 2s
+
+meters:
+  - name: grid
+    type: custom
+    power:
+      source: http
+      uri: http://127.0.0.1:8099/grid
+      method: GET
+
+chargers:
+  - name: dcstation
+    type: template
+    template: ocpp
+    stationid: SIMDC
+    connector: 1
+    chargingrateunit: A
+
+loadpoints:
+  - title: DC Sim
+    charger: dcstation
+    circuit: main
+    mode: now
+    chargingType: dc
+    dcMaxVoltage: 1000
+    minCurrent: 6
+    maxCurrent: 250
+
+circuits:
+  - name: main
+    meter: grid
+    maxPower: 118000
+
+site:
+  title: DC Test
+  meters:
+    grid: grid
