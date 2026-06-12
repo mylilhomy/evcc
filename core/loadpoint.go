@@ -6,6 +6,7 @@ import (
 	"math"
 	"reflect"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -100,9 +101,11 @@ type Loadpoint struct {
 	Enable, Disable loadpoint.ThresholdConfig
 
 	// from yaml
-	DefaultMode api.ChargeMode `mapstructure:"mode"`     // Default charge mode, used for disconnect
-	Title       string         `mapstructure:"title"`    // UI title
-	Priority    int            `mapstructure:"priority"` // Priority
+	DefaultMode  api.ChargeMode `mapstructure:"mode"`         // Default charge mode, used for disconnect
+	Title        string         `mapstructure:"title"`        // UI title
+	Priority     int            `mapstructure:"priority"`     // Priority
+	ChargingType string         `mapstructure:"chargingType"` // Charging type: "ac" (default) or "dc"
+	DcMaxVoltage float64        `mapstructure:"dcMaxVoltage"` // DC: maximum charger voltage, used as conservative fallback when no measurement is available
 
 	// from yaml, deprecated
 	GuardDuration_ time.Duration `mapstructure:"guardduration"` // ignored, present for compatibility
@@ -162,6 +165,7 @@ type Loadpoint struct {
 	status         api.ChargeStatus // Charger status
 	chargePower    float64          // Charging power
 	chargeCurrents []float64        // Phase currents
+	chargeVoltages []float64        // Phase voltages (DC: charging voltage)
 	connectedTime  time.Time        // Time when vehicle was connected
 	pvTimer        time.Time        // PV enabled/disable timer
 	phaseTimer     time.Time        // 1p3p switch timer
@@ -211,6 +215,19 @@ func NewLoadpointFromConfig(log *util.Logger, settings settings.Settings, collec
 	// choose sane default if mode is not set
 	if lp.mode = lp.DefaultMode; lp.mode == "" {
 		lp.mode = api.ModeOff
+	}
+
+	// validate charging type
+	switch strings.ToLower(lp.ChargingType) {
+	case "", "ac":
+		lp.ChargingType = ""
+	case ChargingTypeDC:
+		lp.ChargingType = ChargingTypeDC
+		if lp.DcMaxVoltage <= 0 {
+			return lp, fmt.Errorf("chargingType dc requires dcMaxVoltage (maximum charger voltage)")
+		}
+	default:
+		return lp, fmt.Errorf("invalid chargingType: %s", lp.ChargingType)
 	}
 
 	if lp.Priority > 0 {
@@ -627,7 +644,7 @@ func (lp *Loadpoint) evChargeCurrentHandler(current float64) {
 // If physical charge meter is present this handler is not used.
 // The actual value is published by the evChargeCurrentHandler
 func (lp *Loadpoint) evChargeCurrentWrappedMeterHandler(current float64) {
-	power := current * float64(lp.ActivePhases()) * Voltage
+	power := lp.currentToPower(current, lp.ActivePhases())
 
 	// if disabled we cannot be charging
 	if !lp.enabled || !lp.charging() {
@@ -914,8 +931,8 @@ func (lp *Loadpoint) setLimit(current float64) error {
 		currentLimit := lp.circuit.ValidateCurrent(actualCurrent, current)
 
 		activePhases := lp.ActivePhases()
-		powerLimit := lp.circuit.ValidatePower(lp.chargePower, currentToPower(current, activePhases))
-		currentLimitViaPower := powerToCurrent(powerLimit, activePhases)
+		powerLimit := lp.circuit.ValidatePower(lp.chargePower, lp.currentToPower(current, activePhases))
+		currentLimitViaPower := lp.powerToCurrent(powerLimit, activePhases)
 
 		current = lp.roundedCurrent(min(currentLimit, currentLimitViaPower))
 	}
@@ -1519,9 +1536,9 @@ func (lp *Loadpoint) pvMaxCurrent(mode api.ChargeMode, sitePower, batteryBoostPo
 	}
 	if lp.chargerHasFeature(api.IntegratedDevice) {
 		// for slow-acting heating devices, only take actually consumed power into account
-		effectiveCurrent = powerToCurrent(lp.chargePower, activePhases)
+		effectiveCurrent = lp.powerToCurrent(lp.chargePower, activePhases)
 	}
-	deltaCurrent := powerToCurrent(-sitePower, activePhases)
+	deltaCurrent := lp.powerToCurrent(-sitePower, activePhases)
 	targetCurrent := max(effectiveCurrent+deltaCurrent, 0)
 
 	// in MinPV mode or under special conditions return at least minCurrent
@@ -1698,6 +1715,11 @@ func (lp *Loadpoint) phasesFromChargeCurrents() {
 
 // updateChargeVoltages uses PhaseVoltages interface to count phases with nominal grid voltage
 func (lp *Loadpoint) updateChargeVoltages() {
+	// reset to make stale values conservative (DC: fall back to dcMaxVoltage)
+	lp.Lock()
+	lp.chargeVoltages = nil
+	lp.Unlock()
+
 	phaseMeter, ok := api.Cap[api.PhaseVoltages](lp.chargeMeter)
 	if !ok {
 		return // don't guess
@@ -1713,8 +1735,15 @@ func (lp *Loadpoint) updateChargeVoltages() {
 	}
 
 	chargeVoltages := []float64{u1, u2, u3}
+	lp.Lock()
+	lp.chargeVoltages = chargeVoltages
+	lp.Unlock()
 	lp.log.DEBUG.Printf("charge voltages: %.3gV", chargeVoltages)
 	lp.publish(keys.ChargeVoltages, chargeVoltages)
+
+	if lp.isDC() {
+		return // DC charging voltage, not grid phases - no phase detection
+	}
 
 	if lp.hasPhaseSwitching() {
 		return // we don't need the voltages, but publish

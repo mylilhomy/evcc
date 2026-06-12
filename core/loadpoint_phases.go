@@ -159,5 +159,9 @@ func (lp *Loadpoint) getChargerPhysicalPhases() int {
 }
 
 func (lp *Loadpoint) hasPhaseSwitching() bool {
+	// phase switching is an AC concept; never switch phases on DC chargers
+	if lp.isDC() {
+		return false
+	}
 	return api.HasCap[api.PhaseSwitcher](lp.charger)
 }

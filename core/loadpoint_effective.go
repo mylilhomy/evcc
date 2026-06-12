@@ -216,14 +216,14 @@ func (lp *Loadpoint) effectiveLimitSoc() int {
 
 // EffectiveStepPower returns the effective step power for the currently active phases
 func (lp *Loadpoint) EffectiveStepPower() float64 {
-	return Voltage * float64(lp.ActivePhases())
+	return lp.currentToPower(1, lp.ActivePhases())
 }
 
 // EffectiveMinPower returns the effective min power for the minimum active phases
 func (lp *Loadpoint) EffectiveMinPower() float64 {
 	lp.RLock()
 	defer lp.RUnlock()
-	return Voltage * lp.effectiveMinCurrent() * float64(lp.minActivePhases())
+	return lp.currentToPower(lp.effectiveMinCurrent(), lp.minActivePhases())
 }
 
 // EffectiveMaxPower returns the effective max power taking vehicle capabilities,
@@ -241,7 +241,7 @@ func (lp *Loadpoint) EffectiveMaxPower() float64 {
 
 // effectiveMaxPower returns the effective max power taking vehicle capabilities and phase scaling into account
 func (lp *Loadpoint) effectiveMaxPower() float64 {
-	res := Voltage * lp.effectiveMaxCurrent() * float64(lp.maxActivePhases())
+	res := lp.currentToPower(lp.effectiveMaxCurrent(), lp.maxActivePhases())
 	if lp.vehicle != nil {
 		if maxPower, ok := lp.vehicle.OnIdentified().GetMaxPower(); ok {
 			return min(maxPower, res)
