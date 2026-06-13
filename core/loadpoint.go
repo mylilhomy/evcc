@@ -919,6 +919,14 @@ func (lp *Loadpoint) roundedCurrent(current float64) float64 {
 func (lp *Loadpoint) setLimit(current float64) error {
 	current = lp.roundedCurrent(current)
 
+	// https://github.com/evcc-io/evcc/issues/16309
+	effMinCurrent := lp.effectiveMinCurrent()
+
+	// DC stations cannot pause (0 A): load management may regulate down to the
+	// minimum current but never below. Remember whether the loadpoint intends
+	// to charge before the circuit clamps the current.
+	wantCharge := current >= effMinCurrent
+
 	// apply circuit limits
 	if lp.circuit != nil {
 		var actualCurrent float64
@@ -935,10 +943,15 @@ func (lp *Loadpoint) setLimit(current float64) error {
 		currentLimitViaPower := lp.powerToCurrent(powerLimit, activePhases)
 
 		current = lp.roundedCurrent(min(currentLimit, currentLimitViaPower))
+
+		// DC stations can only abort or regulate down to minCurrent, never pause.
+		// Hold at the minimum instead of letting load management force a disable.
+		if lp.isDC() && wantCharge && current < effMinCurrent {
+			lp.log.DEBUG.Printf("dc station cannot pause: holding at min %.3gA (circuit limit would force %.3gA)", effMinCurrent, current)
+			current = effMinCurrent
+		}
 	}
 
-	// https://github.com/evcc-io/evcc/issues/16309
-	effMinCurrent := lp.effectiveMinCurrent()
 	if effMaxCurrent := lp.effectiveMaxCurrent(); effMinCurrent > effMaxCurrent {
 		return fmt.Errorf("invalid config: min current %.3gA exceeds max current %.3gA", effMinCurrent, effMaxCurrent)
 	}

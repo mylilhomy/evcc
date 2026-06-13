@@ -137,6 +137,20 @@ def main():
         check("D: System stabil, laedt", st["loadpoints"][0].get("charging", False),
               f"charging={st['loadpoints'][0].get('charging')}")
 
+        # ----------------------------------------------------------------
+        # Szenario E: DC-Station kann nicht pausieren. Selbst bei unmoeglichem
+        # Budget (Netz weit ueber 118kW) muss evcc bei min 6A halten statt 0A
+        # ----------------------------------------------------------------
+        print("Szenario E: DC kann nicht pausieren -> Mindeststrom 6A statt 0A")
+        sim.state.update(u_dc=400, car_max_a=250, building=200000, pv=0)
+        settle(18)
+        st = api_state(); lp = st["loadpoints"][0]; i = lp_offered_current(st)
+        check("E: haelt Mindeststrom (>=6A), pausiert nicht", i >= 6,
+              f"offeredCurrent={i:.0f}A (ohne Fix waere 0A/disable)")
+        check("E: laedt weiter (kein 0A/Abbruch)", lp.get("charging", False),
+              f"charging={lp.get('charging')} P={lp.get('chargePower', 0) / 1000:.1f}kW")
+        sim.state.update(building=8000)
+
         print()
         passed = sum(1 for _, ok, _ in results if ok)
         total = len(results)
