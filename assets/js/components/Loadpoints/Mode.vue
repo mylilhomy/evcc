@@ -1,51 +1,35 @@
 <template>
 	<div class="mode-group border d-inline-flex" role="group" data-testid="mode">
 		<button
-			v-for="m in modes"
-			:key="m"
 			type="button"
 			class="btn flex-grow-1 flex-shrink-1 text-truncate-xs-only"
-			:class="{ active: isActive(m) }"
+			:class="{ active: manual }"
 			tabindex="0"
-			@click="setTargetMode(m)"
+			@click="$emit('updated', true)"
 		>
-			{{ label(m) }}
+			{{ $t("main.mode.manual") }}
+		</button>
+		<button
+			type="button"
+			class="btn flex-grow-1 flex-shrink-1 text-truncate-xs-only"
+			:class="{ active: !manual }"
+			tabindex="0"
+			@click="$emit('updated', false)"
+		>
+			{{ $t("main.mode.auto") }}
 		</button>
 	</div>
 </template>
 
 <script lang="ts">
-import { CHARGE_MODE } from "@/types/evcc";
 import { defineComponent } from "vue";
-
-const { OFF, NOW } = CHARGE_MODE;
 
 export default defineComponent({
 	name: "Mode",
 	props: {
-		mode: String,
-		pvPossible: Boolean,
-		smartCostAvailable: Boolean,
+		manual: Boolean,
 	},
 	emits: ["updated"],
-
-	computed: {
-		modes(): CHARGE_MODE[] {
-			// DC load management: only off and auto (was "now"); PV/Min+PV removed
-			return [OFF, NOW];
-		},
-	},
-	methods: {
-		label(mode: CHARGE_MODE) {
-			return this.$t(`main.mode.${mode}`);
-		},
-		isActive(mode: CHARGE_MODE) {
-			return this.mode === mode;
-		},
-		setTargetMode(mode: CHARGE_MODE) {
-			this.$emit("updated", mode);
-		},
-	},
 });
 </script>
 

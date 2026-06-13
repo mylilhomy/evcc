@@ -1321,6 +1321,8 @@
       "vehicle": "Fahrzeug"
     },
     "mode": {
+      "auto": "Auto",
+      "manual": "Manuell",
       "minpv": "Min+PV",
       "now": "Auto",
       "off": "Aus",

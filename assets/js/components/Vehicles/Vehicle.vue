@@ -56,23 +56,6 @@
 				:disabled="chargingPlanDisabled"
 				@open-modal="$emit('open-modal')"
 			/>
-			<LimitSocSelect
-				v-if="socBasedCharging"
-				class="flex-grow-1 text-end"
-				:limit-soc="displayLimitSoc"
-				:range-per-soc="rangePerSoc"
-				:heating="heating"
-				@limit-soc-updated="limitSocUpdated"
-			/>
-			<LimitEnergySelect
-				v-else
-				class="flex-grow-1 text-end"
-				:limit-energy="limitEnergy"
-				:soc-per-kwh="socPerKwh"
-				:charged-energy="chargedEnergy"
-				:capacity="capacity"
-				@limit-energy-updated="limitEnergyUpdated"
-			/>
 		</div>
 	</div>
 </template>

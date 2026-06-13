@@ -15,20 +15,9 @@
 						{{ loadpointTitle }}
 					</div>
 				</h3>
-				<LoadpointSettingsButton
-					:class="expandLoadpointHeader ? 'd-lg-block d-xl-none' : ''"
-					class="d-block d-sm-none"
-					@click="openSettingsModal"
-				/>
 			</div>
 			<div class="mb-3 d-flex align-items-center">
-				<Mode class="flex-grow-1" v-bind="modeProps" @updated="setTargetMode" />
-				<LoadpointSettingsButton
-					:id="id"
-					:class="expandLoadpointHeader ? 'd-lg-none d-xl-block' : ''"
-					class="d-none d-sm-block ms-2"
-					@click="openSettingsModal"
-				/>
+				<Mode class="flex-grow-1" :manual="manual" @updated="setManualMode" />
 			</div>
 		</div>
 
@@ -80,7 +69,7 @@
 			<LoadpointSessionInfo v-bind="sessionInfoProps" />
 		</div>
 
-		<div class="charge-limit d-flex align-items-center mb-3">
+		<div v-if="manual" class="charge-limit d-flex align-items-center mb-3">
 			<label :for="`chargeLimit_${id}`" class="me-3 text-nowrap">
 				{{ $t("main.loadpoint.chargeLimit") }}
 			</label>
@@ -134,8 +123,8 @@ import SettingsModal from "./SettingsModal.vue";
 import VehicleIcon from "../VehicleIcon";
 import SessionInfo from "./SessionInfo.vue";
 import { defineComponent, type PropType } from "vue";
+import { CHARGE_MODE } from "@/types/evcc";
 import type {
-	CHARGE_MODE,
 	PHASE_ACTION,
 	PV_ACTION,
 	CHARGER_STATUS_REASON,
@@ -278,6 +267,9 @@ export default defineComponent({
 			chargeDurationInterpolated: this.chargeDuration,
 			chargeRemainingDurationInterpolated: this.chargeRemainingDuration,
 			manualMaxCurrentLocal: null as number | null,
+			// manual mode: user caps current via slider; auto: load management decides.
+			// Initialised from the persisted maxCurrent (capped = manual).
+			manualSelected: (this.maxCurrent ?? 250) < 250,
 		};
 	},
 	computed: {
@@ -319,6 +311,9 @@ export default defineComponent({
 		},
 		showChargingIndicator() {
 			return this.charging && this.chargePower > 0;
+		},
+		manual(): boolean {
+			return this.manualSelected;
 		},
 		chargeLimitMax(): number {
 			// DC station hardware maximum (A); keep above any configured value
@@ -394,8 +389,23 @@ export default defineComponent({
 		apiPath(func: string) {
 			return "loadpoints/" + this.id + "/" + func;
 		},
-		setTargetMode(mode: CHARGE_MODE) {
-			api.post(this.apiPath("mode") + "/" + mode);
+		setManualMode(manual: boolean) {
+			this.manualSelected = manual;
+			// no "off" anymore: the loadpoint always charges (load management / manual cap)
+			api.post(this.apiPath("mode") + "/" + CHARGE_MODE.NOW);
+			if (manual) {
+				// switch to a sensible manual cap if currently at full
+				const value =
+					(this.maxCurrent ?? this.chargeLimitMax) >= this.chargeLimitMax
+						? Math.round(this.chargeLimitMax / 2)
+						: Math.round(this.maxCurrent ?? this.chargeLimitMax);
+				this.manualMaxCurrentLocal = value;
+				api.post(this.apiPath("maxcurrent") + "/" + value);
+			} else {
+				// auto: lift the manual cap, let load management use the full range
+				this.manualMaxCurrentLocal = null;
+				api.post(this.apiPath("maxcurrent") + "/" + this.chargeLimitMax);
+			}
 		},
 		onChargeLimitInput(e: Event) {
 			// live feedback while dragging
