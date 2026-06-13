@@ -79,6 +79,30 @@
 			/>
 			<LoadpointSessionInfo v-bind="sessionInfoProps" />
 		</div>
+
+		<div class="charge-limit d-flex align-items-center mb-3">
+			<label :for="`chargeLimit_${id}`" class="me-3 text-nowrap">
+				{{ $t("main.loadpoint.chargeLimit") }}
+			</label>
+			<input
+				:id="`chargeLimit_${id}`"
+				type="range"
+				class="form-range flex-grow-1 me-3"
+				:min="minCurrent || 6"
+				:max="chargeLimitMax"
+				step="1"
+				:value="manualMaxCurrent"
+				@input="onChargeLimitInput"
+				@change="onChargeLimitChange"
+			/>
+			<span class="value text-end text-nowrap">
+				<template v-if="manualMaxCurrent >= chargeLimitMax">
+					{{ $t("main.loadpoint.chargeLimitMax") }}
+				</template>
+				<template v-else>{{ manualMaxCurrent }}&nbsp;A</template>
+			</span>
+		</div>
+
 		<hr class="divider" />
 		<Vehicle
 			class="flex-grow-1 d-flex flex-column justify-content-end"
@@ -253,6 +277,7 @@ export default defineComponent({
 			pvRemainingInterpolated: this.pvRemaining,
 			chargeDurationInterpolated: this.chargeDuration,
 			chargeRemainingDurationInterpolated: this.chargeRemainingDuration,
+			manualMaxCurrentLocal: null as number | null,
 		};
 	},
 	computed: {
@@ -294,6 +319,17 @@ export default defineComponent({
 		},
 		showChargingIndicator() {
 			return this.charging && this.chargePower > 0;
+		},
+		chargeLimitMax(): number {
+			// DC station hardware maximum (A); keep above any configured value
+			return Math.max(250, this.maxCurrent || 0);
+		},
+		manualMaxCurrent(): number {
+			// live value while dragging, otherwise the server-side maxCurrent
+			if (this.manualMaxCurrentLocal !== null) {
+				return this.manualMaxCurrentLocal;
+			}
+			return Math.round(this.maxCurrent || this.chargeLimitMax);
 		},
 		planTimeUnreachable() {
 			// 1 minute tolerance
@@ -361,6 +397,19 @@ export default defineComponent({
 		setTargetMode(mode: CHARGE_MODE) {
 			api.post(this.apiPath("mode") + "/" + mode);
 		},
+		onChargeLimitInput(e: Event) {
+			// live feedback while dragging
+			this.manualMaxCurrentLocal = Number((e.target as HTMLInputElement).value);
+		},
+		onChargeLimitChange(e: Event) {
+			const value = Number((e.target as HTMLInputElement).value);
+			api.post(this.apiPath("maxcurrent") + "/" + value).finally(() => {
+				// release local override so the server value takes over once it syncs
+				setTimeout(() => {
+					this.manualMaxCurrentLocal = null;
+				}, 1000);
+			});
+		},
 		setLimitSoc(soc: number) {
 			api.post(this.apiPath("limitsoc") + "/" + soc);
 		},
@@ -412,6 +461,18 @@ export default defineComponent({
 }
 .opacity-transiton {
 	transition: opacity var(--evcc-transition-slow) ease-in;
+}
+.charge-limit label {
+	color: var(--evcc-gray);
+	font-size: 0.875rem;
+}
+.charge-limit .value {
+	min-width: 3.5rem;
+	font-weight: bold;
+	font-variant-numeric: tabular-nums;
+}
+.charge-limit .form-range {
+	accent-color: var(--evcc-default-text);
 }
 .divider {
 	border: none;

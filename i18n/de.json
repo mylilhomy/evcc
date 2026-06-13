@@ -1260,6 +1260,8 @@
     "loadpoint": {
       "avgPrice": "⌀ Preis",
       "charged": "Geladen",
+      "chargeLimit": "Ladebegrenzung",
+      "chargeLimitMax": "max",
       "co2": "⌀ CO₂",
       "duration": "Ladedauer",
       "emission": "Emission",
@@ -1320,7 +1322,7 @@
     },
     "mode": {
       "minpv": "Min+PV",
-      "now": "Schnell",
+      "now": "Auto",
       "off": "Aus",
       "pv": "PV",
       "smart": "Intelligent"
