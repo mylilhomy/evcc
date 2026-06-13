@@ -29,6 +29,9 @@ const (
 	PhasesConfigured = "phasesConfigured" // desired phase mode (0/1/3, 0 = automatic), user selection
 	PhasesActive     = "phasesActive"     // expectedly active phases, taking vehicle into account (1/2/3)
 
+	ChargingType = "chargingType" // charging type: "ac" (default) or "dc"
+	DcMaxVoltage = "dcMaxVoltage" // dc: maximum charger voltage, conservative fallback when no measurement is available
+
 	ChargerIcon         = "chargerIcon"         // charger icon for ui
 	ChargerFeature      = "chargerFeature"      // charger feature
 	ChargerSinglePhase  = "chargerSinglePhase"  // api.PhaseDescriber: charger physical phases, sockets only

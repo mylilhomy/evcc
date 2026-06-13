@@ -13,6 +13,10 @@ type StaticConfig struct {
 	Meter   string `json:"meter,omitempty"`
 	Circuit string `json:"circuit,omitempty"`
 	Vehicle string `json:"vehicle,omitempty"`
+
+	// dc charging (requires restart to change)
+	ChargingType string  `json:"chargingType,omitempty"`
+	DcMaxVoltage float64 `json:"dcMaxVoltage,omitempty"`
 }
 
 type DynamicConfig struct {

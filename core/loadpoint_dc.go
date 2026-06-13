@@ -12,6 +12,19 @@ func (lp *Loadpoint) isDC() bool {
 	return lp.ChargingType == ChargingTypeDC
 }
 
+// GetChargingType returns the charging type ("ac" or "dc")
+func (lp *Loadpoint) GetChargingType() string {
+	if lp.isDC() {
+		return ChargingTypeDC
+	}
+	return "ac"
+}
+
+// GetDcMaxVoltage returns the maximum DC charger voltage
+func (lp *Loadpoint) GetDcMaxVoltage() float64 {
+	return lp.DcMaxVoltage
+}
+
 // effectiveVoltage returns the voltage for converting power to current and vice versa.
 // For AC loadpoints this is the global nominal grid voltage. For DC loadpoints it is
 // the live measured charging voltage, falling back to the configured maximum charger

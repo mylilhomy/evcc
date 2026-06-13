@@ -5,13 +5,7 @@ export default {
   title: "Loadpoints/Mode",
   component: Mode,
   argTypes: {
-    mode: {
-      control: "select",
-      options: ["off", "now", "minpv", "pv"],
-      description: "Charging mode",
-    },
-    pvPossible: { control: "boolean", description: "Whether PV is possible" },
-    smartCostAvailable: { control: "boolean", description: "Whether smart cost is available" },
+    manual: { control: "boolean", description: "Manual mode active (vs. automatic)" },
   },
   parameters: {
     layout: "centered",
@@ -30,19 +24,8 @@ const Template: StoryFn<typeof Mode> = (args) => {
   return story;
 };
 
-export const Minimal = Template.bind({});
-Minimal.args = { mode: "now" };
+export const Automatic = Template.bind({});
+Automatic.args = { manual: false };
 
-export const Full = Template.bind({});
-Full.args = {
-  mode: "pv",
-  pvPossible: true,
-  smartCostAvailable: true,
-};
-
-export const SmartGridOnly = Template.bind({});
-SmartGridOnly.args = {
-  mode: "pv",
-  pvPossible: false,
-  smartCostAvailable: true,
-};
+export const Manual = Template.bind({});
+Manual.args = { manual: true };

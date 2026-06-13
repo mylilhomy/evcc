@@ -314,6 +314,48 @@
 						</h6>
 
 						<FormRow
+							id="loadpointChargingType"
+							:label="$t('config.loadpoint.chargingTypeLabel')"
+							:help="isDC ? $t('config.loadpoint.chargingTypeDcHelp') : undefined"
+						>
+							<SelectGroup
+								id="loadpointChargingType"
+								v-model="values.chargingType"
+								class="w-100"
+								:options="[
+									{
+										name: $t('config.loadpoint.chargingTypeAc'),
+										value: 'ac',
+									},
+									{
+										name: $t('config.loadpoint.chargingTypeDc'),
+										value: 'dc',
+									},
+								]"
+								transparent
+								equal-width
+							/>
+						</FormRow>
+
+						<FormRow
+							v-if="isDC"
+							id="loadpointDcMaxVoltage"
+							:label="$t('config.loadpoint.dcMaxVoltageLabel')"
+							:help="$t('config.loadpoint.dcMaxVoltageHelp')"
+						>
+							<PropertyField
+								id="loadpointDcMaxVoltage"
+								v-model="values.dcMaxVoltage"
+								type="Float"
+								unit="V"
+								size="w-25 w-min-200"
+								class="me-2"
+								required
+							/>
+						</FormRow>
+
+						<FormRow
+							v-if="!isDC"
 							id="chargerPower"
 							:label="$t('config.loadpoint.chargerTypeLabel')"
 							:help="
@@ -346,7 +388,7 @@
 							/>
 						</FormRow>
 
-						<div v-if="chargerPower === 'other'" class="row ms-3 mb-5">
+						<div v-if="isDC || chargerPower === 'other'" class="row ms-3 mb-5">
 							<FormRow
 								id="loadpointMinCurrent"
 								:label="$t('config.loadpoint.minCurrentLabel')"
@@ -390,7 +432,7 @@
 							</FormRow>
 						</div>
 
-						<template v-if="!chargerIsSinglePhase">
+						<template v-if="!chargerIsSinglePhase && !isDC">
 							<FormRow
 								v-if="chargerSupports1p3p"
 								id="loadpointParamPhases"
@@ -607,6 +649,7 @@ const defaultValues = {
 	id: undefined,
 	title: "",
 	phasesConfigured: 3,
+	chargingType: "ac",
 	minCurrent: 6,
 	maxCurrent: 16,
 	priority: 0,
@@ -706,6 +749,9 @@ export default {
 				return {};
 			}
 			return this.chargerValues[this.values.charger] || {};
+		},
+		isDC() {
+			return this.values.chargingType === "dc";
 		},
 		chargerSupports1p3p() {
 			return this.chargerStatus.phases1p3p?.value || false;
@@ -820,6 +866,11 @@ export default {
 		chargerIsSinglePhase() {
 			this.updatePhases();
 		},
+		isDC(value) {
+			if (value && !this.values.dcMaxVoltage) {
+				this.values.dcMaxVoltage = 1000;
+			}
+		},
 	},
 	methods: {
 		reset() {
@@ -832,6 +883,9 @@ export default {
 			try {
 				const res = await api.get(`config/loadpoints/${this.id}`);
 				this.values = deepClone(res.data);
+				if (!this.values.chargingType) {
+					this.values.chargingType = "ac";
+				}
 				this.updateChargerPower();
 				this.updateSolarMode();
 				this.updatePhases();
@@ -847,13 +901,20 @@ export default {
 		async update() {
 			this.saving = true;
 			try {
-				const values = deepClone(this.values);
+				const values = this.payload();
 				await api.put(`config/loadpoints/${this.id}`, values);
 				this.emitChanged("updated");
 			} catch (e) {
 				handleError(e, "update failed");
 			}
 			this.saving = false;
+		},
+		payload() {
+			const values = deepClone(this.values);
+			if (values.chargingType !== "dc") {
+				delete values.dcMaxVoltage;
+			}
+			return values;
 		},
 		async remove() {
 			try {
@@ -867,7 +928,7 @@ export default {
 		async create() {
 			this.saving = true;
 			try {
-				await api.post("config/loadpoints", this.values);
+				await api.post("config/loadpoints", this.payload());
 				this.created = true;
 				this.emitChanged("added");
 			} catch (e) {

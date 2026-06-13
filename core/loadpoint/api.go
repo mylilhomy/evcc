@@ -65,6 +65,10 @@ type API interface {
 	GetMaxCurrent() float64
 	// SetMaxCurrent sets the max charging current
 	SetMaxCurrent(float64) error
+	// GetChargingType returns the charging type ("ac" or "dc")
+	GetChargingType() string
+	// GetDcMaxVoltage returns the maximum DC charger voltage
+	GetDcMaxVoltage() float64
 
 	// GetMode returns the current charge mode
 	GetMode() api.ChargeMode

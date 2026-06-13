@@ -403,6 +403,34 @@ func (mr *MockAPIMockRecorder) GetMaxPhaseCurrent() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaxPhaseCurrent", reflect.TypeOf((*MockAPI)(nil).GetMaxPhaseCurrent))
 }
 
+// GetChargingType mocks base method.
+func (m *MockAPI) GetChargingType() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetChargingType")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetChargingType indicates an expected call of GetChargingType.
+func (mr *MockAPIMockRecorder) GetChargingType() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChargingType", reflect.TypeOf((*MockAPI)(nil).GetChargingType))
+}
+
+// GetDcMaxVoltage mocks base method.
+func (m *MockAPI) GetDcMaxVoltage() float64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDcMaxVoltage")
+	ret0, _ := ret[0].(float64)
+	return ret0
+}
+
+// GetDcMaxVoltage indicates an expected call of GetDcMaxVoltage.
+func (mr *MockAPIMockRecorder) GetDcMaxVoltage() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDcMaxVoltage", reflect.TypeOf((*MockAPI)(nil).GetDcMaxVoltage))
+}
+
 // GetMeterRef mocks base method.
 func (m *MockAPI) GetMeterRef() string {
 	m.ctrl.T.Helper()

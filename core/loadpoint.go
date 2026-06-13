@@ -707,6 +707,8 @@ func (lp *Loadpoint) Prepare(site site.API, uiChan chan<- util.Param, pushChan c
 	lp.publish(keys.PhasesConfigured, lp.phasesConfigured)
 	lp.publish(keys.ChargerPhases1p3p, lp.hasPhaseSwitching())
 	lp.publish(keys.ChargerSinglePhase, lp.getChargerPhysicalPhases() == 1)
+	lp.publish(keys.ChargingType, lp.GetChargingType())
+	lp.publish(keys.DcMaxVoltage, lp.DcMaxVoltage)
 	lp.publish(keys.PhasesActive, lp.ActivePhases())
 	lp.publish(keys.SmartCostLimit, lp.smartCostLimit)
 	lp.publish(keys.SmartFeedInPriorityLimit, lp.smartFeedInPriorityLimit)
@@ -1705,6 +1707,10 @@ func (lp *Loadpoint) UpdateChargePowerAndCurrents() float64 {
 func (lp *Loadpoint) phasesFromChargeCurrents() {
 	if lp.chargeCurrents == nil {
 		return
+	}
+
+	if lp.isDC() {
+		return // DC charging current, not grid phases - no phase detection
 	}
 
 	if lp.charging() && lp.phaseSwitchCompleted() {

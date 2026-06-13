@@ -250,6 +250,8 @@ export interface ConfigLoadpoint {
   phasesConfigured: number;
   minCurrent: number;
   maxCurrent: number;
+  chargingType?: string;
+  dcMaxVoltage?: number;
   smartCostLimit: number | null;
   planEnergy?: number;
   planTime?: string;
@@ -281,6 +283,11 @@ export enum LENGTH_UNIT {
   MILES = "mi",
 }
 
+export enum CHARGING_TYPE {
+  AC = "ac",
+  DC = "dc",
+}
+
 export interface Loadpoint {
   name: string;
   batteryBoost: boolean;
@@ -301,7 +308,9 @@ export interface Loadpoint {
   chargerSinglePhase: boolean;
   chargerStatusReason: CHARGER_STATUS_REASON | null;
   charging: boolean;
+  chargingType?: CHARGING_TYPE;
   connected: boolean;
+  dcMaxVoltage?: number;
   connectedDuration: number;
   disableDelay: number;
   disableThreshold: number;
