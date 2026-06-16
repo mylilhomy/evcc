@@ -66,6 +66,23 @@ func TestDcPowerCurrentConversion(t *testing.T) {
 	assert.InDelta(t, 50.0, dc.powerToCurrent(40000, 3), 1e-9)
 }
 
+func TestDcHardMaxPowerToCurrent(t *testing.T) {
+	Voltage = 230
+
+	// hard 40 kW cap converts to a voltage-independent current limit
+	dc := NewLoadpoint(util.NewLogger("foo"), nil)
+	dc.ChargingType = ChargingTypeDC
+	dc.DcMaxVoltage = 1000
+	dc.MaxPower = 40000
+
+	dc.chargeVoltages = []float64{400, 0, 0}
+	assert.InDelta(t, 100.0, dc.powerToCurrent(dc.MaxPower, 3), 1e-9, "40kW cap = 100A at 400V")
+	dc.chargeVoltages = []float64{800, 0, 0}
+	assert.InDelta(t, 50.0, dc.powerToCurrent(dc.MaxPower, 3), 1e-9, "40kW cap = 50A at 800V (same power)")
+	// delivered power is the cap regardless of voltage
+	assert.InDelta(t, 40000.0, dc.currentToPower(dc.powerToCurrent(dc.MaxPower, 3), 3), 1e-9)
+}
+
 func TestDcDisablesPhaseSwitching(t *testing.T) {
 	lp := NewLoadpoint(util.NewLogger("foo"), nil)
 	lp.ChargingType = ChargingTypeDC

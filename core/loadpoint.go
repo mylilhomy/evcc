@@ -106,6 +106,7 @@ type Loadpoint struct {
 	Priority     int            `mapstructure:"priority"`     // Priority
 	ChargingType string         `mapstructure:"chargingType"` // Charging type: "ac" (default) or "dc"
 	DcMaxVoltage float64        `mapstructure:"dcMaxVoltage"` // DC: maximum charger voltage, used as conservative fallback when no measurement is available
+	MaxPower     float64        `mapstructure:"maxPower"`     // hard upper power limit in W (0 = off); voltage-independent cap on delivered charging power
 
 	// from yaml, deprecated
 	GuardDuration_ time.Duration `mapstructure:"guardduration"` // ignored, present for compatibility
@@ -228,6 +229,10 @@ func NewLoadpointFromConfig(log *util.Logger, settings settings.Settings, collec
 		}
 	default:
 		return lp, fmt.Errorf("invalid chargingType: %s", lp.ChargingType)
+	}
+
+	if lp.MaxPower < 0 {
+		return lp, fmt.Errorf("maxPower must not be negative")
 	}
 
 	if lp.Priority > 0 {
@@ -709,6 +714,7 @@ func (lp *Loadpoint) Prepare(site site.API, uiChan chan<- util.Param, pushChan c
 	lp.publish(keys.ChargerSinglePhase, lp.getChargerPhysicalPhases() == 1)
 	lp.publish(keys.ChargingType, lp.GetChargingType())
 	lp.publish(keys.DcMaxVoltage, lp.DcMaxVoltage)
+	lp.publish(keys.MaxPower, lp.MaxPower)
 	lp.publish(keys.PhasesActive, lp.ActivePhases())
 	lp.publish(keys.SmartCostLimit, lp.smartCostLimit)
 	lp.publish(keys.SmartFeedInPriorityLimit, lp.smartFeedInPriorityLimit)
@@ -951,6 +957,17 @@ func (lp *Loadpoint) setLimit(current float64) error {
 		if lp.isDC() && wantCharge && current < effMinCurrent {
 			lp.log.DEBUG.Printf("dc station cannot pause: holding at min %.3gA (circuit limit would force %.3gA)", effMinCurrent, current)
 			current = effMinCurrent
+		}
+	}
+
+	// hard upper power limit (voltage-independent): cap the delivered charging
+	// power to MaxPower regardless of vehicle voltage. For DC this uses the live
+	// charging voltage, so e.g. a 40 kW cap stays 40 kW at 400 V and at 800 V.
+	if lp.MaxPower > 0 && wantCharge {
+		capCurrent := lp.roundedCurrent(lp.powerToCurrent(lp.MaxPower, lp.ActivePhases()))
+		if capCurrent < current {
+			lp.log.DEBUG.Printf("hard power limit %.3gkW: capping %.3gA -> %.3gA", lp.MaxPower/1e3, current, capCurrent)
+			current = capCurrent
 		}
 	}
 

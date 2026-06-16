@@ -17,6 +17,7 @@ type StaticConfig struct {
 	// dc charging (requires restart to change)
 	ChargingType string  `json:"chargingType,omitempty"`
 	DcMaxVoltage float64 `json:"dcMaxVoltage,omitempty"`
+	MaxPower     float64 `json:"maxPower,omitempty"` // hard upper power limit in W (0 = off)
 }
 
 type DynamicConfig struct {

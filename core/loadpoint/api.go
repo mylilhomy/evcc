@@ -69,6 +69,8 @@ type API interface {
 	GetChargingType() string
 	// GetDcMaxVoltage returns the maximum DC charger voltage
 	GetDcMaxVoltage() float64
+	// GetMaxPower returns the hard upper power limit in W (0 = off)
+	GetMaxPower() float64
 
 	// GetMode returns the current charge mode
 	GetMode() api.ChargeMode

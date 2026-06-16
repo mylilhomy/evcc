@@ -25,6 +25,7 @@ func getLoadpointStaticConfig(lp loadpoint.API) loadpoint.StaticConfig {
 		Vehicle:      lp.GetDefaultVehicleRef(),
 		ChargingType: lp.GetChargingType(),
 		DcMaxVoltage: lp.GetDcMaxVoltage(),
+		MaxPower:     lp.GetMaxPower(),
 	}
 }
 

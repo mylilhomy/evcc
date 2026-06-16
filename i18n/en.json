@@ -356,6 +356,8 @@
       "chargingTypeLabel": "Charging type",
       "dcMaxVoltageHelp": "Maximum charging voltage of the station. Used as a conservative fallback while no measured voltage is available.",
       "dcMaxVoltageLabel": "Maximum voltage",
+      "maxPowerHelp": "Hard upper power limit for this charge point (empty/0 = off). Voltage-independent: the delivered charging power never exceeds this value, regardless of the vehicle voltage.",
+      "maxPowerLabel": "Maximum power",
       "circuitHelp": "Load management assignment to ensure power and current limits are not exceeded.",
       "circuitInvalid": "Circuit does not exist",
       "circuitLabel": "Circuit",

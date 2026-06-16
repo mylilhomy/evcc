@@ -355,6 +355,21 @@
 						</FormRow>
 
 						<FormRow
+							id="loadpointMaxPower"
+							:label="$t('config.loadpoint.maxPowerLabel')"
+							:help="$t('config.loadpoint.maxPowerHelp')"
+						>
+							<PropertyField
+								id="loadpointMaxPower"
+								v-model="maxPowerKw"
+								type="Float"
+								unit="kW"
+								size="w-25 w-min-200"
+								class="me-2"
+							/>
+						</FormRow>
+
+						<FormRow
 							v-if="!isDC"
 							id="chargerPower"
 							:label="$t('config.loadpoint.chargerTypeLabel')"
@@ -752,6 +767,14 @@ export default {
 		},
 		isDC() {
 			return this.values.chargingType === "dc";
+		},
+		maxPowerKw: {
+			get(): number | undefined {
+				return this.values.maxPower ? this.values.maxPower / 1000 : undefined;
+			},
+			set(value: number) {
+				this.values.maxPower = value ? Math.round(value * 1000) : 0;
+			},
 		},
 		chargerSupports1p3p() {
 			return this.chargerStatus.phases1p3p?.value || false;

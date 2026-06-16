@@ -25,6 +25,11 @@ func (lp *Loadpoint) GetDcMaxVoltage() float64 {
 	return lp.DcMaxVoltage
 }
 
+// GetMaxPower returns the hard upper power limit in W (0 = off)
+func (lp *Loadpoint) GetMaxPower() float64 {
+	return lp.MaxPower
+}
+
 // effectiveVoltage returns the voltage for converting power to current and vice versa.
 // For AC loadpoints this is the global nominal grid voltage. For DC loadpoints it is
 // the live measured charging voltage, falling back to the configured maximum charger

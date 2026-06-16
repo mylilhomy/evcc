@@ -31,6 +31,7 @@ const (
 
 	ChargingType = "chargingType" // charging type: "ac" (default) or "dc"
 	DcMaxVoltage = "dcMaxVoltage" // dc: maximum charger voltage, conservative fallback when no measurement is available
+	MaxPower     = "maxPower"     // hard upper power limit in W (0 = off)
 
 	ChargerIcon         = "chargerIcon"         // charger icon for ui
 	ChargerFeature      = "chargerFeature"      // charger feature

@@ -252,6 +252,7 @@ export interface ConfigLoadpoint {
   maxCurrent: number;
   chargingType?: string;
   dcMaxVoltage?: number;
+  maxPower?: number;
   smartCostLimit: number | null;
   planEnergy?: number;
   planTime?: string;

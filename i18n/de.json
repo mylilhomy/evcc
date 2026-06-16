@@ -357,6 +357,8 @@
       "chargingTypeLabel": "Stromart",
       "dcMaxVoltageHelp": "Maximale Ladespannung der Station. Wird als konservativer Fallback verwendet, solange keine gemessene Spannung vorliegt.",
       "dcMaxVoltageLabel": "Maximale Spannung",
+      "maxPowerHelp": "Harte Leistungsobergrenze für diesen Ladepunkt (leer/0 = aus). Spannungsunabhängig: Die gelieferte Ladeleistung überschreitet diesen Wert nie, unabhängig von der Fahrzeugspannung.",
+      "maxPowerLabel": "Maximale Leistung",
       "circuitHelp": "Lastmanagement-Zuordnung, um die Leistungs- und Stromgrenzen nicht zu überschreiten.",
       "circuitInvalid": "Stromkreis existiert nicht",
       "circuitLabel": "Stromkreis",
