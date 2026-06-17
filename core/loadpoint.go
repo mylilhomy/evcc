@@ -378,6 +378,9 @@ func (lp *Loadpoint) restoreSettings() {
 	if v, err := lp.settings.Float(keys.MaxCurrent); err == nil && v > 0 {
 		lp.setMaxCurrent(v)
 	}
+	if v, err := lp.settings.Float(keys.MaxPower); err == nil && v >= 0 {
+		lp.MaxPower = v // hard power limit, persisted via UI (0 = off)
+	}
 	if v, err := lp.settings.Int(keys.LimitSoc); err == nil && v > 0 {
 		lp.setLimitSoc(int(v))
 	}

@@ -445,6 +445,20 @@ func (mr *MockAPIMockRecorder) GetMaxPower() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaxPower", reflect.TypeOf((*MockAPI)(nil).GetMaxPower))
 }
 
+// SetMaxPower mocks base method.
+func (m *MockAPI) SetMaxPower(arg0 float64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetMaxPower", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetMaxPower indicates an expected call of SetMaxPower.
+func (mr *MockAPIMockRecorder) SetMaxPower(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMaxPower", reflect.TypeOf((*MockAPI)(nil).SetMaxPower), arg0)
+}
+
 // GetMeterRef mocks base method.
 func (m *MockAPI) GetMeterRef() string {
 	m.ctrl.T.Helper()

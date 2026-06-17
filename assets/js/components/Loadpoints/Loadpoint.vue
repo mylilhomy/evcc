@@ -92,6 +92,24 @@
 			</span>
 		</div>
 
+		<div class="max-power d-flex align-items-center mb-3">
+			<label :for="`maxPower_${id}`" class="me-3 text-nowrap">
+				{{ $t("main.loadpoint.maxPower") }}
+			</label>
+			<input
+				:id="`maxPower_${id}`"
+				type="number"
+				class="form-control form-control-sm flex-grow-1 me-2"
+				min="0"
+				step="1"
+				inputmode="decimal"
+				:placeholder="$t('main.loadpoint.maxPowerOff')"
+				:value="maxPowerKw"
+				@change="onMaxPowerChange"
+			/>
+			<span class="unit text-nowrap">kW</span>
+		</div>
+
 		<hr class="divider" />
 		<Vehicle
 			class="flex-grow-1 d-flex flex-column justify-content-end"
@@ -220,6 +238,7 @@ export default defineComponent({
 		chargerSinglePhase: Boolean,
 		minCurrent: Number,
 		maxCurrent: Number,
+		maxPower: { type: Number, default: 0 },
 		offeredCurrent: Number,
 		connectedDuration: Number,
 		chargeCurrents: Array,
@@ -315,6 +334,9 @@ export default defineComponent({
 		manual(): boolean {
 			return this.manualSelected;
 		},
+		maxPowerKw(): number | string {
+			return this.maxPower > 0 ? Math.round((this.maxPower / 1000) * 10) / 10 : "";
+		},
 		chargeLimitMax(): number {
 			// DC station hardware maximum (A); keep above any configured value
 			return Math.max(250, this.maxCurrent || 0);
@@ -388,6 +410,11 @@ export default defineComponent({
 		},
 		apiPath(func: string) {
 			return "loadpoints/" + this.id + "/" + func;
+		},
+		onMaxPowerChange(e: Event) {
+			const kw = parseFloat((e.target as HTMLInputElement).value);
+			const watts = isNaN(kw) || kw <= 0 ? 0 : Math.round(kw * 1000);
+			api.post(this.apiPath("maxpower") + "/" + watts);
 		},
 		setManualMode(manual: boolean) {
 			this.manualSelected = manual;
@@ -483,6 +510,16 @@ export default defineComponent({
 }
 .charge-limit .form-range {
 	accent-color: var(--evcc-default-text);
+}
+.max-power label {
+	color: var(--evcc-gray);
+	font-size: 0.875rem;
+}
+.max-power .unit {
+	font-weight: bold;
+}
+.max-power .form-control {
+	max-width: 8rem;
 }
 .divider {
 	border: none;

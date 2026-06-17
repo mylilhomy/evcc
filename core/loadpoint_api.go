@@ -759,6 +759,37 @@ func (lp *Loadpoint) SetMaxCurrent(current float64) error {
 	return nil
 }
 
+// GetMaxPower returns the hard upper power limit in W (0 = off)
+func (lp *Loadpoint) GetMaxPower() float64 {
+	lp.RLock()
+	defer lp.RUnlock()
+	return lp.MaxPower
+}
+
+// setMaxPower sets the hard upper power limit and persists it
+func (lp *Loadpoint) setMaxPower(power float64) {
+	lp.MaxPower = power
+	lp.publish(keys.MaxPower, lp.MaxPower)
+	lp.settings.SetFloat(keys.MaxPower, lp.MaxPower)
+}
+
+// SetMaxPower sets the hard upper power limit in W (0 = off)
+func (lp *Loadpoint) SetMaxPower(power float64) error {
+	lp.Lock()
+	defer lp.Unlock()
+
+	if power < 0 {
+		return errors.New("max power must not be negative")
+	}
+
+	lp.log.DEBUG.Println("set max power:", power)
+	if power != lp.MaxPower {
+		lp.setMaxPower(power)
+	}
+
+	return nil
+}
+
 // IsFastChargingActive indicates if fast charging with maximum power is active
 func (lp *Loadpoint) IsFastChargingActive() bool {
 	lp.RLock()

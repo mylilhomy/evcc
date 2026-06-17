@@ -1267,6 +1267,10 @@
     "loadpoint": {
       "avgPrice": "⌀ Price",
       "charged": "Charged",
+      "chargeLimit": "Charge limit",
+      "chargeLimitMax": "max",
+      "maxPower": "Max. power",
+      "maxPowerOff": "off",
       "co2": "⌀ CO₂",
       "duration": "Duration",
       "emission": "Emission",

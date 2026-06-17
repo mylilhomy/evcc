@@ -1270,6 +1270,8 @@
       "charged": "Geladen",
       "chargeLimit": "Ladebegrenzung",
       "chargeLimitMax": "max",
+      "maxPower": "Max. Leistung",
+      "maxPowerOff": "aus",
       "co2": "⌀ CO₂",
       "duration": "Ladedauer",
       "emission": "Emission",

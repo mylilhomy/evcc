@@ -71,6 +71,8 @@ type API interface {
 	GetDcMaxVoltage() float64
 	// GetMaxPower returns the hard upper power limit in W (0 = off)
 	GetMaxPower() float64
+	// SetMaxPower sets the hard upper power limit in W (0 = off)
+	SetMaxPower(float64) error
 
 	// GetMode returns the current charge mode
 	GetMode() api.ChargeMode
